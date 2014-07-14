@@ -52,10 +52,9 @@
                                 .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
 
               $(window).on('pieTrackerFormed', function(event, data){               
-                   console.log('hahah')
-                   var group = thepie.selectAll("g").data(pie(arrayOfOnes(data.numSections)))
-                   var arcgroup=         group.enter().append('g')
-                   var exit = group.exit().remove()
+                   var group = thepie.selectAll("g").data(pie(arrayOfOnes(data.numSections)));
+                   var arcgroup=         group.enter().append('g');
+                   
 
                    var path = arcgroup.append("path")
                            .attr("fill", "#fff")
@@ -127,9 +126,7 @@
                   var jobs_colors = data.jobs_colors;
                   var numSections = data.numSections;
                   var path = data.path;
-
-
-                  var jobs_counts = getRandomCounts(numSections);
+                  var jobs_counts = data.jobs_counts;
                   
                   /*console.log(jobs_counts)
                   var sum = 0;
@@ -139,7 +136,7 @@
                   console.log('sum: ' + sum); */
 
                   path = path.data(pie(jobs_counts))
-                             .attr("fill", function(d,i) {return jobs_colors[i]})
+                             .attr("fill", function(d,i) {return jobs_colors[i]});
                   path.transition().duration(750).attrTween("d", arcTween); // redraw the arcs
 
                   // Store the displayed angles in _current.
