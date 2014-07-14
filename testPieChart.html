@@ -21,7 +21,7 @@
                 var pieTracker = {};
               }
 
-              var numSections = 6;
+              var numSections = 7;
               var jobs_colors = getRandomColors(numSections);  var jobs_colors = getRandomColors(numSections);
             
               var innerRadius = 0;
@@ -30,7 +30,14 @@
               var height      = 500;
 
               
-              var textArray = ['name1', 'name2', 'name3', 'name4', 'name5', 'name6'];
+              var textArray = [];
+
+              for( var i = 0; i< numSections; ++i)
+               {
+                   textArray.push('name' + (i+1))
+               }
+               console.log(textArray);
+
               var pie = d3.layout.pie()
                           .sort(null);
                      
@@ -45,10 +52,10 @@
                                 .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
 
               $(window).on('pieTrackerFormed', function(event, data){               
-
-                  var arc= thepie.selectAll("g g").data(pie(arrayOfOnes(data.numSections)))
-                  var arcgroup = arc.enter().append('g'); 
-                  var exitgroup = arc.exit().remove();
+                   console.log('hahah')
+                   var group = thepie.selectAll("g").data(pie(arrayOfOnes(data.numSections)))
+                   var arcgroup=         group.enter().append('g')
+                   var exit = group.exit().remove()
 
                    var path = arcgroup.append("path")
                            .attr("fill", "#fff")
