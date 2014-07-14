@@ -46,13 +46,15 @@
 
               $(window).on('pieTrackerFormed', function(event, data){               
 
-                   var arcgroup = thepie.selectAll("svg").data(pie(arrayOfOnes(data.numSections)))
-                            .enter().append('g')
+                  var arc= thepie.selectAll("g g").data(pie(arrayOfOnes(data.numSections)))
+                  var arcgroup = arc.enter().append('g'); 
+                  var exitgroup = arc.exit().remove();
 
                    var path = arcgroup.append("path")
                            .attr("fill", "#fff")
                            .attr("d", arc)
                            .each(function(d) { this._current = d;  }); // store the initial values
+
                    var slicelabels = arcgroup.append('text')
                                      .attr("transform", function(d) {                    //set the label's origin to the center of the arc
                                     //we have to make sure to set these before calling arc.centroid
@@ -80,6 +82,36 @@
               
               //a loop to start making a new piegraph
               setInterval( function(){ newPieTracker(textArray, jobs_colors, getRandomCounts(textArray.length), thepie );}, 3000);
+              function newPieTracker(nameList, colorList, mapData, svg){
+                  if(!((nameList.length === colorList.length) && ( colorList.length === mapData.length) ))
+                  {
+                    throw{
+                          error: 'Error'   ,
+                          msg: 'argument lengths are different when forming new pieTracker'
+                    }
+                  }
+                  var aPieTracker = function(){
+                    var temp = {};
+                    
+                    temp.numSections = nameList.length;
+                    temp.nameList = nameList;
+                    temp.colorList = colorList;
+                    temp.mapData = mapData;
+                    temp.svg = svg
+
+                    temp.map = {};
+                    //make hashMap
+                    /*for(var i = 0; i < nameList.length; ++i)
+                    {
+                      temp.map[nameList[i]] = {color: colorList[i], data:mapData[i]}
+                    }*/
+
+                    return temp;
+                  }()
+
+                  //trigger event that includes the PieTracker
+                  $(window).trigger('pieTrackerFormed', [aPieTracker]);
+              }
 
               function worker(event, data) {
                   var svg = data.svg;
@@ -113,10 +145,7 @@
                           return arc(i(t));
                       };
                   }
-              }
-                                      
-
-              
+              }           
 
               function addRandomColor(list){
                   list.push('#'+Math.floor(Math.random()*16777215).toString(16));
@@ -155,36 +184,7 @@
 
               //takes in an array of names, colors and Data
               //when done emits an event called 'pieTrackerFormed' which includes the pieTracker data
-              function newPieTracker(nameList, colorList, mapData, svg){
-                  if(!((nameList.length === colorList.length) && ( colorList.length === mapData.length) ))
-                  {
-                    throw{
-                          error: 'Error'   ,
-                          msg: 'argument lengths are different when forming new pieTracker'
-                    }
-                  }
-                  var aPieTracker = function(){
-                    var temp = {};
-                    
-                    temp.numSections = nameList.length;
-                    temp.nameList = nameList;
-                    temp.colorList = colorList;
-                    temp.mapData = mapData;
-                    temp.svg = svg
-
-                    temp.map = {};
-                    //make hashMap
-                    for(var i = 0; i < nameList.length; ++i)
-                    {
-                      temp.map[nameList[i]] = {color: colorList[i], data:mapData[i]}
-                    }
-
-                    return temp;
-                  }()
-
-                  //trigger event that includes the PieTracker
-                  $(window).trigger('pieTrackerFormed', [aPieTracker]);
-              }
+             
 
         	});
             
