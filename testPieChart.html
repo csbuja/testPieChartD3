@@ -14,11 +14,15 @@
     <body>
         <script type="text/javascript">
         	$(document).ready(function(){
+              //seeds the random numberGenerator
               Math.seedrandom('hello.');
+
+              if(!pieTracker){
+                var pieTracker = {};
+              }
+
               var numSections = 6;
               var jobs_colors = getRandomColors(numSections);  var jobs_colors = getRandomColors(numSections);
-
-
             
               var innerRadius = 0;
               var outerRadius = 130;
@@ -27,55 +31,70 @@
 
               
               var textArray = ['name1', 'name2', 'name3', 'name4', 'name5', 'name6'];
-
-
               var pie = d3.layout.pie()
-                                 .sort(null);
-                   
+                          .sort(null);
+                     
               var arc = d3.svg.arc()
-                              .innerRadius(innerRadius)
-                              .outerRadius(outerRadius);
+                          .innerRadius(innerRadius)
+                          .outerRadius(outerRadius);
 
               var svg = d3.select("body").append("svg")
                                          .attr("width", width)
                                          .attr("height", height)
                                          .append("g")
                                          .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
-              //  function makePieChart(){
-              var arcgroup = svg.selectAll("svg").data(pie(arrayOfOnes(numSections)))
-                          .enter().append('g')
 
-              var path = arcgroup.append("path")
-                         .attr("fill", "#fff")
-                         .attr("d", arc)
-                         .each(function(d) { this._current = d; }); // store the initial values
+              $(window).on('pieTrackerFormed', function(event, data){               
 
-              var slicelabels = arcgroup.append('text')
-                                .attr("transform", function(d) {                    //set the label's origin to the center of the arc
-                                  //we have to make sure to set these before calling arc.centroid
-                                  d.innerRadius = 0;
-                                  d.outerRadius = 240;
-                                  return "translate(" + arc.centroid(d) + ")";        //this gives us a pair of coordinates like [50, 50]
-                                })
-                                .text('hahaha');
+                   var arcgroup = svg.selectAll("svg").data(pie(arrayOfOnes(data.numSections)))
+                            .enter().append('g')
 
-              /*svg.selectAll('text').data(textArray)
-                        .append('svg:text')
-                        .attr('fill', 'red')
-                        .attr('font-size', '20px');
-                        .text(function(d,i){textArray[i];})*/
-              $(svg).on("monitor", {svg:svg, arc:arc, pie:pie, jobs_colors:jobs_colors, numSections: numSections}, worker);
+                   var path = arcgroup.append("path")
+                           .attr("fill", "#fff")
+                           .attr("d", arc)
+                           .each(function(d) { this._current = d;  }); // store the initial values
+                   var slicelabels = arcgroup.append('text')
+                                     .attr("transform", function(d) {                    //set the label's origin to the center of the arc
+                                    //we have to make sure to set these before calling arc.centroid
+                                    /*d.innerRadius = 200;
+                                    d.outerRadius = 400;
+                                    return "translate(" + arc.centroid(d) + ")";        //this gives us a pair of coordinates like [50, 50]*/
+                                     var c = arc.centroid(d);
+                                     return "translate(" + c[0]*2 +"," + c[1]*2 + ")";
+                                     })
+                                     .text('hahaha');
+
+                   /*svg.selectAll('text').data(textArray)
+                          .append('svg:text')
+                          .attr('fill', 'red')
+                          .attr('font-size', '20px');
+                          .text(function(d,i){textArray[i];})*/
+                   
 
 
-              //makePieChart();
-              $(svg).trigger("monitor");
+                    $(window).trigger("startPieWorker", [{svg:data.svg, arc:arc, pie:pie, jobs_colors: data.colorList, numSections: data.numSections, path: path, jobs_counts: data.mapData}] );
+              });
 
-              function worker(event) {
-                  var svg = event.data.svg;
-                  var arc  = event.data.arc;
-                  var pie  = event.data.pie;
-                  var jobs_colors = event.data.jobs_colors;
-                  var numSections = event.data.numSections;
+              $(window).on("startPieWorker",  worker);
+
+              //makes a variable with all the newInfo
+
+              setInterval( stuff, 3000);
+              
+              function stuff(){
+                console.log('shit');
+                newPieTracker(textArray, jobs_colors, getRandomCounts(textArray.length),svg );
+
+              }
+
+
+              function worker(event, data) {
+                  var svg = data.svg;
+                  var arc  = data.arc;
+                  var pie  = data.pie;
+                  var jobs_colors = data.jobs_colors;
+                  var numSections = data.numSections;
+                  var path = data.path;
 
 
                   var jobs_counts = getRandomCounts(numSections);
@@ -90,22 +109,20 @@
                   path = path.data(pie(jobs_counts))
                              .attr("fill", function(d,i) {return jobs_colors[i]})
                   path.transition().duration(750).attrTween("d", arcTween); // redraw the arcs
-                                                                                                 
-                  setTimeout(function(){$(svg).trigger("monitor")}, 1000)
+ 
+                  function arcTween(a) {
+                      var i = d3.interpolate(this._current, a);
+                      this._current = i(0);
+                      return function(t) {
+                          return arc(i(t));
+                      };
+                  }
               }
                                       
               // Store the displayed angles in _current.
               // Then, interpolate from _current to the new angles.
               // During the transition, _current is updated in-place by d3.interpolate.
-              function arcTween(a) {
-                var i = d3.interpolate(this._current, a);
-                this._current = i(0);
-                return function(t) {
-                  return arc(i(t));
-                };
-              }
-
-
+              
 
               function addRandomColor(list){
                   list.push('#'+Math.floor(Math.random()*16777215).toString(16));
@@ -142,6 +159,39 @@
               }     
               function arrayOfOnes(numSections){
                 return Array.apply(null, new Array(numSections)).map(Number.prototype.valueOf,1);    
+              }
+
+              //takes in an array of names, colors and Data
+              //when done emits an event called 'pieTrackerFormed' which includes the pieTracker data
+              function newPieTracker(nameList, colorList, mapData, svg){
+                  if(!((nameList.length === colorList.length) && ( colorList.length === mapData.length) ))
+                  {
+                    throw{
+                          error: 'Error'   ,
+                          msg: 'argument lengths are different when forming new pieTracker'
+                    }
+                  }
+                  var aPieTracker = function(){
+                    var temp = {};
+                    
+                    temp.numSections = nameList.length;
+                    temp.nameList = nameList;
+                    temp.colorList = colorList;
+                    temp.mapData = mapData;
+                    temp.svg = svg
+
+                    temp.map = {};
+                    //make hashMap
+                    for(var i = 0; i < nameList.length; ++i)
+                    {
+                      temp.map[nameList[i]] = {color: colorList[i], data:mapData[i]}
+                    }
+
+                    return temp;
+                  }()
+
+                  //trigger event that includes the PieTracker
+                  $(window).trigger('pieTrackerFormed', [aPieTracker]);
               }
 
         	});
