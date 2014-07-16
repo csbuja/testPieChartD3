@@ -46,7 +46,11 @@
         	$(document).ready(function(){
               Math.seedrandom('hello.');
               var UPDATESECTIONS_SEC = 3;
+
+              //change this if you want more sections -- not a constant because sliceArray will eventually take objects
               var numSections = 6;
+              
+              //create colorScheme
               var jobs_colors = getRandomColors(numSections);  var jobs_colors = getRandomColors(numSections);
 
 
@@ -58,13 +62,14 @@
 
               var sliceData = getRandomCounts(numSections); 
               var sliceArray = [];
+
               for(var i = 0; i< numSections; ++i)
               {
                   sliceArray[i] = {};
                   sliceArray[i].name = ('SampleData' + (i+1));
                   sliceArray[i].data = sliceData[i];
                   sliceArray[i].color = jobs_colors[i];
-              } console.log(sliceArray);
+              }
 
               var pie = d3.layout.pie()
                                  .sort(null);
@@ -98,9 +103,7 @@
 
               populateList();
               function populateList()
-              {
-
-                  console.log($('#thelist .pielistitem').length);                
+              {               
                   sliceData = getRandomCounts(numSections); 
                   var sum = 0;
                   $.each(sliceData, function(i,v){sliceArray[i].data = v; sum += v;});
@@ -129,6 +132,9 @@
                       return  (percent<10) ? percent.toFixed(3)  : percent.toFixed(2);
                   }
               }
+
+              // D3 CODE THAT I REPLACED WITH JQUERY
+
               // formList(lineperlist);
 
               // function formList(line){
@@ -155,6 +161,7 @@
                          .attr("d", arc)
                          .each(function(d) { this._current = d; }); // store the initial values
 
+              //REMOVED TEXT OVERLAYING PIE CHART
               /*var slicelabels = arcgroup.append('text')
                                 .attr("transform", function(d) {                    //set the label's origin to the center of the arc
                                   //we have to make sure to set these before calling arc.centroid
@@ -182,13 +189,6 @@
                   var jobs_colors = event.data.jobs_colors;
                   var numSections = event.data.numSections;
                   var jobs_counts = sliceData;
-                  
-                  /*console.log(jobs_counts)
-                  var sum = 0;
-                  $(jobs_counts).each(function(i,value){
-                    sum+=value; 
-                  });
-                  console.log('sum: ' + sum); */
 
                   path = path.data(pie(jobs_counts))
                              .attr("fill", function(d,i) {return jobs_colors[i]})
@@ -208,8 +208,6 @@
                 };
               }
 
-
-
               function addRandomColor(list){
                   list.push('#'+Math.floor(Math.random()*16777215).toString(16));
               }            
@@ -217,7 +215,6 @@
               //takes in a numberOfColors
               //returns an Array of Random Colors if
               function getRandomColors(numColors){
-                  console.log('called')
                   if(numColors<0){
                       throw{
                           error: 'Error'   ,
@@ -225,7 +222,6 @@
                       }
                   }
                   else{
-                    console.log('teets')
                     var theArray = [] ;
                     for(var i = 0; i< numColors; ++i)
                     {
