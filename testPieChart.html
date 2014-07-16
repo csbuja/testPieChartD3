@@ -25,9 +25,15 @@
               var width       = 800;
               var height      = 500;
 
-              
-              var textArray = ['name1', 'name2', 'name3', 'name4', 'name5', 'name6'];
-
+              var sliceData = getRandomCounts(numSections); 
+              var sliceArray = [];
+              for(var i = 0; i< numSections; ++i)
+              {
+                  sliceArray[i] = {};
+                  sliceArray[i].name = ('name' + (i+1));
+                  sliceArray[i].data = sliceData[i];
+                  sliceArray[i].color = jobs_colors[i];
+              } console.log(sliceArray);
 
               var pie = d3.layout.pie()
                                  .sort(null);
@@ -36,38 +42,100 @@
                               .innerRadius(innerRadius)
                               .outerRadius(outerRadius);
 
-              var svg = d3.select("body").append("svg")
+              var mainsvg = d3.select("body").append("svg")
                                          .attr("width", width)
                                          .attr("height", height)
-                                         .append("g")
-                                         .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
-              //  function makePieChart(){
+
+              var list = d3.select('body')
+                                .append('ul')
+                                .style('height','200')
+                                .style('width', '20')
+                                //.attr('height', 200);
+                                //.attr('width', 100);
+                                .style('background-color', 'red')
+                                .attr('id', 'thelist')
+                                .selectAll('li');
+                                
+
+              var svg  =   mainsvg.append("g")
+                           .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+
+              
+              var lineperlist = list.data(sliceArray)
+                                .enter().append('li')
+                                    .attr('class', 'pielistitem')
+                                    .style('border-bottom','2px solid black');
+
+              populateList();
+              function populateList()
+              {
+
+                  console.log($('#thelist .pielistitem').length);                
+                  sliceData = getRandomCounts(numSections); 
+                  var sum = 0;
+                  $.each(sliceData, function(i,v){sliceArray[i].data = v; sum += v;});
+                  var countitems = $('.pielistitem').length;
+                  $('.pielistitem').each(function(i,v){
+                        this.remove();
+                  });
+
+                  if( sliceArray.length !== countitems){
+                    $.each(sliceArray,function(i,value){
+                          $('#thelist').hide().append(  '<li class="pielistitem"> <span style="display: inline-block; margin-right: 5px;">name: ' + value.name + 
+                          '</span> <span style="display: inline-block;"> data: ' + Math.round ( ( (value.data )/sum * 100 ) * 100 )/ 100+ '% </span> <div> <div style="display: inline-block; background-color: rgb(245, 148, 174);"></div> </div>   </li>' ).fadeIn(400);
+                    });
+                  }
+                  else{
+                    $.each(sliceArray,function(i,value){
+                          $('#thelist').append(  '<li class="pielistitem"> <span style="display: inline-block; margin-right: 5px;">name: ' + value.name + 
+                          '</span> <span style="display: inline-block;"> data: ' + Math.round ( ( (value.data )/sum * 100 ) * 100 )/ 100+ '% </span> <div> <div style="display: inline-block; background-color: rgb(245, 148, 174);"></div> </div>   </li>' );
+                    });
+                  }
+              }
+              // formList(lineperlist);
+
+              // function formList(line){
+              // var name = line.append('span')
+              //            .text(function(d){return 'name:' + d.name;})
+              //            .style('display', 'inline-block')
+              //            .style('margin-right', '5px');
+              // var data = line.append('span')
+              //            .text(function(d){return 'data:' + d.data;})
+              //            .style('display', 'inline-block');
+              // var name = line.append('div')
+              //       //   .style('display', 'inline-block')
+              //            .append('div')
+              //            .style('height','5')
+              //            .style('width', '5')
+              //            .style('display', 'inline-block')
+              //            .style('background-color', function(d){return d.color;})
+              // }
               var arcgroup = svg.selectAll("svg").data(pie(arrayOfOnes(numSections)))
-                          .enter().append('g')
+                          .enter().append('g');
 
               var path = arcgroup.append("path")
                          .attr("fill", "#fff")
                          .attr("d", arc)
                          .each(function(d) { this._current = d; }); // store the initial values
 
-              var slicelabels = arcgroup.append('text')
+              /*var slicelabels = arcgroup.append('text')
                                 .attr("transform", function(d) {                    //set the label's origin to the center of the arc
                                   //we have to make sure to set these before calling arc.centroid
                                   d.innerRadius = 0;
                                   d.outerRadius = 240;
                                   return "translate(" + arc.centroid(d) + ")";        //this gives us a pair of coordinates like [50, 50]
                                 })
-                                .text('hahaha');
+                                .text('hahaha'); */
 
               /*svg.selectAll('text').data(textArray)
                         .append('svg:text')
                         .attr('fill', 'red')
                         .attr('font-size', '20px');
                         .text(function(d,i){textArray[i];})*/
-              $(svg).on("monitor", {svg:svg, arc:arc, pie:pie, jobs_colors:jobs_colors, numSections: numSections}, worker);
+              $(svg).on("monitor", {svg:svg, arc:arc, pie:pie, jobs_colors:jobs_colors, numSections: numSections, jobs_counts: sliceData}, worker);
 
+              setInterval(populateList,3000);
 
-              //makePieChart();
               $(svg).trigger("monitor");
 
               function worker(event) {
@@ -76,9 +144,7 @@
                   var pie  = event.data.pie;
                   var jobs_colors = event.data.jobs_colors;
                   var numSections = event.data.numSections;
-
-
-                  var jobs_counts = getRandomCounts(numSections);
+                  var jobs_counts = sliceData;
                   
                   /*console.log(jobs_counts)
                   var sum = 0;
