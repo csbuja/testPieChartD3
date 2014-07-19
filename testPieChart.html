@@ -62,11 +62,13 @@
 
               var sliceData = getRandomCounts(numSections); 
               var sliceArray = [];
+              var namesArray = []
 
               for(var i = 0; i< numSections; ++i)
               {
                   sliceArray[i] = {};
                   sliceArray[i].name = ('SampleData' + (i+1));
+                  namesArray[i] = sliceArray[i].name;
                   sliceArray[i].data = sliceData[i];
                   sliceArray[i].color = jobs_colors[i];
               }
@@ -78,12 +80,14 @@
                               .innerRadius(innerRadius)
                               .outerRadius(outerRadius);
 
+              //setTimeout(function(){arc.innerRadius(30), 10000 });
               var mainsvg = d3.select("body").append("svg")
                                          .attr("width", width)
                                          .attr("height", height)
 
               var svg  =   mainsvg.append("g")
                            .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+
 
               $('#listcontainer').append('<div> </div>')
               .attr('id','listkey')
@@ -176,7 +180,62 @@
                         .attr('fill', 'red')
                         .attr('font-size', '20px');
                         .text(function(d,i){textArray[i];})*/
-              $(svg).on("monitor", {svg:svg, arc:arc, pie:pie, jobs_colors:jobs_colors, numSections: numSections, jobs_counts: sliceData}, worker);
+
+
+              //$("[id^='slice']").hover(function(){console.log('hello')});
+              jQuery(function($){
+                $("path[id^='slice']").hover(
+                  function(){
+                  var donutRadius = 50; console.log('in');
+                  var theWidth = 70;
+                  var theHeight = 70;
+                  arc.innerRadius(donutRadius);
+
+                  console.log($(this).attr('fill'));
+
+                  var x = svg.append('g')
+                  .attr('width',theWidth)
+                  .attr('height', theHeight)
+                  .attr("transform", "translate(" + -(theWidth/2.2) + "," + -(theHeight/2) + ")")
+                  .attr('id','labelInDonuthole');
+
+                  x.append('rect')
+                  .attr('width',theWidth)
+                  .attr('height', theHeight)
+                  .style('position', 'absolute')
+                  .attr('stroke','black')
+                  .attr('fill','#fff');
+
+                  x.append('text')
+                  .attr('class','DonutholeText')
+                  .text('nigganingniganginagkas;dlkajs;dflkjas;dflkjas;dlfkjas;ldfkjas;lkdfjas;ldkfjas;ldkfjas;dlkfjas;lkgjasd;lkfjas;ldkfjas;lkdfj')
+                  .attr('fill','blue')
+                  .attr('transform','translate( ' + 0 +' , ' + 25 + ')')
+
+                  x.append('text')
+                  .attr('class','DonutholeText')
+                  .text('nigganingniganginagkas;dlkajs;dflkjas;dflkjas;dlfkjas;ldfkjas;lkdfjas;ldkfjas;ldkfjas;dlkfjas;lkgjasd;lkfjas;ldkfjas;lkdfj')
+                  .attr('fill','blue')
+                  .attr('transform','translate( ' + 0 +' , ' + 50 + ')')
+
+                  //returns an object containing a color, name, and data
+                  //linear time because sliceArray is assumed to be small
+                  function ColorToInfo(hex){
+                    for(var i  = 0 ; i< sliceArray.length; ++i)
+                      if(hex===sliceArray[i].color)
+                      {
+                        return sliceArray[i];
+                      }
+                  }
+                  }, 
+                  function(){
+                    console.log('out'); arc.innerRadius(0);
+                    svg.selectAll('#labelInDonuthole').remove();
+                  });
+              });
+
+
+              $(svg).on("monitor", {svg:svg, arc:arc, pie:pie, jobs_colors:jobs_colors, numSections: numSections, jobs_counts: sliceData, namesArray: namesArray}, worker);
 
               setInterval(populateList,UPDATESECTIONS_SEC*1000);
 
@@ -188,21 +247,25 @@
                   var pie  = event.data.pie;
                   var jobs_colors = event.data.jobs_colors;
                   var numSections = event.data.numSections;
+                  //dont change this assignment to event.data.jobs_counts
                   var jobs_counts = sliceData;
+                  var namesArray = event.data.namesArray;
 
                   path = path.data(pie(jobs_counts))
                              .attr("fill", function(d,i) {return jobs_colors[i]})
+                             .attr('id',function(d,i){return ('slice' + namesArray[i])})
                   path.transition().duration(750).attrTween("d", arcTween); // redraw the arcs
-                                                                                                 
-                  setTimeout(function(){$(svg).trigger("monitor")}, 1000)
+                                                                              
+                  setTimeout(function(){$(svg).trigger("monitor");}, 1000)
               }
                                       
               // Store the displayed angles in _current.
               // Then, interpolate from _current to the new angles.
               // During the transition, _current is updated in-place by d3.interpolate.
-              function arcTween(a) {
-                var i = d3.interpolate(this._current, a);
+              function arcTween(datum, index) {
+                var i = d3.interpolate(this._current, datum);
                 this._current = i(0);
+               // console.log(datum);
                 return function(t) {
                   return arc(i(t));
                 };
